@@ -3,7 +3,7 @@ import fs from "fs";
 
 async function main() {
   let response = await axios.get(
-    "https://server.loki.red/metaforecast-all-questions"
+    "https://api.metaforecast.org/metaforecast-all-questions"
   );
   let data = response.data;
 
