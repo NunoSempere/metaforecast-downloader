@@ -1,21 +1,54 @@
-import axios from "axios";
+/* Imports */
 import fs from "fs";
+import axios from "axios";
+import { builtinModules } from "module";
 
-async function main() {
-  let response = await axios.get(
-    "https://api.metaforecast.org/metaforecast-all-questions"
-  );
-  let data = response.data;
+/* Definitions */
+let graphQLendpoint = "https://metaforecast.org/api/graphql";
+let buildQuery = (endCursor) => `{
+  questions(first: 1000 ${!!endCursor ? `after: "${endCursor}"` : ""}) {
+    edges {
+      node {
+        id
+        title
+        url
+        description
+        options {
+          name
+          probability
+        }
+        qualityIndicators {
+          numForecasts
+          stars
+        }
+        timestamp
+      }
+    }
+    pageInfo {
+      endCursor
+      startCursor
+    }
+  }
+}
+`;
 
-  let ids = ["polymarket-0x515370f1", "metaculus-9584", "predictit-7720"];
-  let questionsOfInterest = data.filter((response) =>
-    ids.includes(response.id)
-  );
-  console.log("Saving results to results.json");
-  fs.writeFileSync("results.json", JSON.stringify(data, null, 4));
+/* Support functions */
+let getSomeMetaforecastPredictions = async (query) => {
+  let response = await axios({
+    url: graphQLendpoint,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: JSON.stringify({ query: query }),
+  })
+    .then((res) => res.data)
+    .then((res) => res.data); // not a typo
+  return response;
+};
 
+let save = (questions) => {
+  fs.writeFileSync("forecasts.json", JSON.stringify(questions, null, 4));
   let tsvHeaders = "title\tplatform\tdate\tforecast\n";
-  let tsvRows = questionsOfInterest
+  let tsvRows = questions
     .map(
       (question) =>
         `${question.title}\t${question.platform}\t${
@@ -25,6 +58,32 @@ async function main() {
     .join("\n");
   let tsvFile = tsvHeaders + tsvRows;
   console.log("Saving results to results.tsv");
-  fs.writeFileSync("results.tsv", tsvFile);
-}
-main();
+  fs.writeFileSync("forecasts.tsv", tsvFile);
+};
+
+let getNodes = (questions) => {
+  let edges = questions.edges;
+  let nodes = edges.map((edge) => edge.node);
+  return nodes;
+};
+// main
+let getAllMetaforecastPredictions = async () => {
+  let results = [];
+  let firstQuery = await getSomeMetaforecastPredictions(buildQuery());
+  results.push(...getNodes(firstQuery.questions));
+  let endCursor = firstQuery.questions.pageInfo.endCursor;
+  while (endCursor) {
+    console.log(endCursor);
+    let queryResults = await getSomeMetaforecastPredictions(
+      buildQuery(endCursor)
+    );
+    let nodes = getNodes(queryResults.questions);
+    results.push(...nodes);
+    endCursor = queryResults.questions.pageInfo.endCursor;
+  }
+  //results = results.map((result) => result.node);
+  save(results);
+  return results;
+};
+
+getAllMetaforecastPredictions();
