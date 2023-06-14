@@ -46,7 +46,8 @@ let getSomeMetaforecastPredictions = async (query) => {
 };
 
 let save = (questions) => {
-  fs.writeFileSync("forecasts.json", JSON.stringify(questions, null, 4));
+  fs.writeFileSync("./data/forecasts.json", JSON.stringify(questions, null, 4));
+  console.log("Saving results to data/forecasts.json");
   let tsvHeaders = "title\tplatform\tdate\tforecast\n";
   let tsvRows = questions
     .map(
@@ -57,8 +58,8 @@ let save = (questions) => {
     )
     .join("\n");
   let tsvFile = tsvHeaders + tsvRows;
-  console.log("Saving results to results.tsv");
-  fs.writeFileSync("forecasts.tsv", tsvFile);
+  console.log("Saving results to data/forecasts.tsv");
+  fs.writeFileSync("./data/forecasts.tsv", tsvFile);
 };
 
 let getNodes = (questions) => {
@@ -71,9 +72,11 @@ let getAllMetaforecastPredictions = async () => {
   let results = [];
   let firstQuery = await getSomeMetaforecastPredictions(buildQuery());
   results.push(...getNodes(firstQuery.questions));
-  let endCursor = firstQuery.questions.pageInfo.endCursor;
+	console.log("Fetching all metaforecast predictions\n")
+  let endCursor = firstQuery.questions.pageInfo.endCursor;  let i = 1
   while (endCursor) {
-    console.log(endCursor);
+    console.log(`${i}/~24; cursor at: ${endCursor}`);
+		i+=1
     let queryResults = await getSomeMetaforecastPredictions(
       buildQuery(endCursor)
     );
