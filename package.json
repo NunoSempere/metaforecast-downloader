@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "one": "node src/one.js",
+    "all": "node src/all.js",
+    "filter": "node src/all.js"
   },
   "type": "module",
   "author": "",
