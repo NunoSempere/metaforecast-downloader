@@ -1,7 +1,6 @@
 /* Imports */
 import fs from "fs";
 import axios from "axios";
-import { builtinModules } from "module";
 
 /* Definitions */
 let graphQLendpoint = "https://metaforecast.org/api/graphql";
@@ -21,7 +20,7 @@ let buildQuery = (endCursor) => `{
           numForecasts
           stars
         }
-        timestamp
+        fetched
       }
     }
     pageInfo {
@@ -53,7 +52,7 @@ let save = (questions) => {
     .map(
       (question) =>
         `${question.title}\t${question.platform}\t${
-          question.timestamp
+          question.fetched
         }\t${JSON.stringify(question.options)}`
     )
     .join("\n");
